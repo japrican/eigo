@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+<script>/* 音声の速さ（ゆっくり／ふつう）。小・中の英語アプリで共通の設定 */
+const SPD_K='audio_speed_v1';function spdSlow(){try{return localStorage.getItem(SPD_K)!=='normal'}catch(e){return true}}
+function spdA(a){try{const r=spdSlow()?0.8:1;a.defaultPlaybackRate=r;a.playbackRate=r;a.preservesPitch=true;a.mozPreservesPitch=true;a.webkitPreservesPitch=true}catch(e){}}
+function spdT(){return spdSlow()?0.7:0.9}
+function spdLabel(){return spdSlow()?'🐢 ゆっくり':'🐇 ふつう'}
+function toggleSpd(){try{localStorage.setItem(SPD_K,spdSlow()?'normal':'slow')}catch(e){}document.querySelectorAll('.spdbtn').forEach(b=>{b.textContent=spdLabel();b.setAttribute('aria-label','音声の速さ：'+(spdSlow()?'ゆっくり':'ふつう'))})}
+document.addEventListener('DOMContentLoaded',()=>document.querySelectorAll('.spdbtn').forEach(b=>b.textContent=spdLabel()));</script>
 <script>/* 同じ学年の単品を4教科以上買った人は、セット扱いにする（4教科分＝3,920円でセット3,500円より高いため） */
 (function(){try{var L=localStorage,n=function(ks,v){return ks.filter(function(k){return L.getItem('app_unlocked_'+k)===v}).length};
 if(!L.getItem('bundle_sho_unlocked_v1')&&n(['sansu','kokugo-sho','kanji','rika-sho','shakai-sho','eigo'],'1')>=4){L.setItem('bundle_sho_unlocked_v1','1');window.__autoSet='sho'}
@@ -384,6 +391,7 @@ body.navon .bnav{display:flex}
       <a class="back" href="https://manabino-mikata.com/portal/" style="text-decoration:none;color:inherit">← 学びのミカタ</a>
       <div style="display:flex;gap:8px;align-items:center">
         <div class="pill"><span class="star" data-ic="star"></span><span id="starTotal">0</span></div>
+        <button class="pill spdbtn" onclick="toggleSpd()" aria-label="音声の速さ" style="cursor:pointer;font:inherit;font-weight:800">🐢 ゆっくり</button>
         <button class="sound" id="soundBtn" onclick="toggleSound()" aria-label="おと"></button>
       </div>
     </div>
@@ -599,7 +607,7 @@ function say(t,force,onEnd){
   if(id){
     try{if(curAudio){curAudio.pause();curAudio.currentTime=0}
       if(canSpeak())speechSynthesis.cancel();
-      const a=new Audio(id+'.mp3');curAudio=a;let fell=false;
+      const a=new Audio(id+'.mp3');spdA(a);curAudio=a;let fell=false;
       const fb=()=>{if(fell||curAudio!==a)return;fell=true;ttsSay(t,done)};
       a.onerror=fb;a.onended=done;
       const pr=a.play();if(pr&&typeof pr.catch==='function')pr.catch(e=>{if(e&&e.name==='NotAllowedError'){done();return}fb()});
@@ -612,7 +620,7 @@ function ttsSay(t,cb){
   let fin=false;const end=()=>{if(fin)return;fin=true;cb&&cb()};
   if(!canSpeak()){end();return}
   setTimeout(end,Math.max(1500,t.length*110));
-  try{speechSynthesis.cancel();const v=new SpeechSynthesisUtterance(t);v.lang='en-US';v.rate=.85;v.onend=end;v.onerror=end;
+  try{speechSynthesis.cancel();const v=new SpeechSynthesisUtterance(t);v.lang='en-US';v.rate=spdT();v.onend=end;v.onerror=end;
     const en=speechSynthesis.getVoices().find(x=>/^en(-|_)US/i.test(x.lang))||speechSynthesis.getVoices().find(x=>/^en/i.test(x.lang));if(en)v.voice=en;
     speechSynthesis.speak(v)}catch(e){}
 }
